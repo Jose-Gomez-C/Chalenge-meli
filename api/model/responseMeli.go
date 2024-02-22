@@ -1,5 +1,10 @@
 package model
 
+type ProductId struct {
+	Id   int
+	Site string
+}
+
 type BodyItem struct {
 	Price      float64 `json:"price"`
 	CategoryID string  `json:"category_id"`

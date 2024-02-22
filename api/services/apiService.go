@@ -10,7 +10,7 @@ import (
 )
 
 type ApiService interface {
-	getItemInfoByProductsId(productsId []ProductId, url string) []model.ResponseItem
+	getItemInfoByProductsId(productsId []model.ProductId, url string) []model.ResponseItem
 	getNameByCategoryId(url string, body model.BodyItem) model.ResponseCategory
 	getDescriptionByCurrencyID(url string, body model.BodyItem) model.ResponseCurrency
 	getNicknameBySellerID(url string, body model.BodyItem) model.ResponseUser
@@ -25,7 +25,7 @@ func NewApiservice(httpAdapter adapter.HttpAdapter, redis adapter.RedisAdapter) 
 	return &apiServiceLayer{httpAdapter: httpAdapter, resdisAdapter: redis}
 }
 
-func (api apiServiceLayer) getItemInfoByProductsId(productsId []ProductId, url string) []model.ResponseItem {
+func (api apiServiceLayer) getItemInfoByProductsId(productsId []model.ProductId, url string) []model.ResponseItem {
 	var response []model.ResponseItem
 	var finalUrl = url + "/items?ids="
 	id := makeIdsForApi(productsId)
@@ -104,10 +104,10 @@ func (api apiServiceLayer) getNicknameBySellerID(url string, body model.BodyItem
 	return response
 }
 
-func makeIdsForApi(productsId []ProductId) []string {
+func makeIdsForApi(productsId []model.ProductId) []string {
 	var result []string
 	for _, product := range productsId {
-		id := product.site + strconv.Itoa(product.id)
+		id := product.Site + strconv.Itoa(product.Id)
 		result = append(result, id)
 	}
 	return result

@@ -19,11 +19,6 @@ type uploadFileServiceLayer struct {
 	itemRepository repositories.ItemRepository
 }
 
-type ProductId struct {
-	id   int
-	site string
-}
-
 func NewUploadServices(api ApiService, repository repositories.ItemRepository) UploadFileService {
 	return &uploadFileServiceLayer{
 		apiService:     api,
@@ -31,9 +26,9 @@ func NewUploadServices(api ApiService, repository repositories.ItemRepository) U
 	}
 }
 
-func (layer *uploadFileServiceLayer) getProductId(data string) []ProductId {
+func (layer *uploadFileServiceLayer) getProductId(data string) []model.ProductId {
 	lines := strings.Split(data, "\n")
-	var productIds []ProductId
+	var productIds []model.ProductId
 	for i, line := range lines {
 		if i == 0 {
 			continue
@@ -94,17 +89,17 @@ func (layer *uploadFileServiceLayer) sendItemsToDb(items []model.Items) {
 	layer.itemRepository.SaveInBatch(items)
 }
 
-func mewProducId(id int, site string) ProductId {
-	return ProductId{
-		id:   id,
-		site: site,
+func mewProducId(id int, site string) model.ProductId {
+	return model.ProductId{
+		Id:   id,
+		Site: site,
 	}
 }
 
-func newItemModel(category model.ResponseCategory, currency model.ResponseCurrency, seller model.ResponseUser, productId ProductId, allInfo model.BodyItem) model.Items {
+func newItemModel(category model.ResponseCategory, currency model.ResponseCurrency, seller model.ResponseUser, productId model.ProductId, allInfo model.BodyItem) model.Items {
 	return model.Items{
-		SiteId:       productId.site,
-		Id:           productId.id,
+		SiteId:       productId.Site,
+		Id:           productId.Id,
 		Price:        allInfo.Price,
 		NameCategory: category.Name,
 		Description:  currency.Description,
@@ -112,7 +107,7 @@ func newItemModel(category model.ResponseCategory, currency model.ResponseCurren
 	}
 }
 
-func getProductIdFromString(id string) (ProductId, error) {
+func getProductIdFromString(id string) (model.ProductId, error) {
 	re := regexp.MustCompile(`(\d+)`)
 	matches := re.FindAllStringSubmatch(id, -1)
 	if len(matches) > 0 && len(matches[0]) > 1 {
