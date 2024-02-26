@@ -1,8 +1,8 @@
 package contoller
 
 import (
+	"bufio"
 	"fmt"
-	"io"
 
 	"github.com/Jose-Gomez-c/challenge/api/services"
 	"github.com/gin-gonic/gin"
@@ -26,33 +26,30 @@ func (fileControllerLayer *fileControllerLayer) FillDataBase() gin.HandlerFunc {
 			fmt.Println("Fallo no es multi")
 			return
 		}
-		form, err := context.MultipartForm()
+		form, _, err := context.Request.FormFile("file")
 		if err != nil {
 			fmt.Println("error con el context multipart")
 			return
 		}
-		files := form.File["file"]
-		if files == nil {
-			fmt.Println("Erro con la llave")
+		defer form.Close()
+
+		scanner := bufio.NewScanner(form)
+		if !scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				fmt.Println("Error al leer la primera línea: ", err)
+			}
 			return
 		}
-		for _, file := range files {
-			data, err := file.Open()
-			if err != nil {
-				fmt.Println("error abrir el archivo")
-				return
-			}
-			defer data.Close()
-			content, err := io.ReadAll(data)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			str := string(content)
-			result := fileControllerLayer.fileService.FillDataBase(str, "https://api.mercadolibre.com")
+		for scanner.Scan() {
+			info := scanner.Text()
+			fmt.Println(info)
+			result := fileControllerLayer.fileService.FillDataBase(info, "https://api.mercadolibre.com")
 			fmt.Println(result)
-
 		}
+		// str := string(content)
+		// result := fileControllerLayer.fileService.FillDataBase(str, "https://api.mercadolibre.com")
+		// fmt.Println(result)
 
 	}
+
 }

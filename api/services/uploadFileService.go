@@ -27,21 +27,15 @@ func NewUploadServices(api ApiService, repository repositories.ItemRepository) U
 }
 
 func (layer *uploadFileServiceLayer) getProductId(data string) []model.ProductId {
-	lines := strings.Split(data, "\n")
-	var productIds []model.ProductId
-	for i, line := range lines {
-		if i == 0 {
-			continue
-		}
-		values := strings.Split(line, ",")
-		id, err := strconv.Atoi(strings.ReplaceAll(values[1], "\r", ""))
-		if err != nil {
-			fmt.Println("Error al convertir entero: ", err)
-		}
-		info := mewProducId(id, values[0])
-		productIds = append(productIds, info)
+	var producIds []model.ProductId
+	values := strings.Split(data, ",")
+	id, err := strconv.Atoi(strings.ReplaceAll(values[1], "\r", ""))
+	if err != nil {
+		fmt.Println("Error al convertir entero: ", err)
 	}
-	return productIds
+	info := mewProducId(id, values[0])
+	producIds = append(producIds, info)
+	return producIds
 }
 
 func (layer *uploadFileServiceLayer) FillDataBase(data string, url string) []model.ResponseItem {
@@ -60,11 +54,8 @@ func (layer *uploadFileServiceLayer) FillDataBase(data string, url string) []mod
 	if err != nil {
 		fmt.Println("error al obtener info", err)
 	}
-	layer.sendItemsToDb(itemModel)
-	fmt.Println(haveInfo)
-	fmt.Println(noInfo)
-	fmt.Println(itemModel)
 
+	layer.sendItemsToDb(itemModel, noInfo)
 	return body
 }
 
@@ -85,8 +76,15 @@ func (layer *uploadFileServiceLayer) getAllInfo(items []model.BodyItem, url stri
 	return itemModel, nil
 }
 
-func (layer *uploadFileServiceLayer) sendItemsToDb(items []model.Items) {
+func (layer *uploadFileServiceLayer) sendItemsToDb(items []model.Items, noInfo []string) {
+	var noInfoItems []model.Items
 	layer.itemRepository.SaveInBatch(items)
+	for _, bi := range noInfo {
+		productId, _ := getProductIdFromString(bi)
+		item := newItemModelWithOutInfo(productId)
+		noInfoItems = append(noInfoItems, item)
+	}
+	layer.itemRepository.SaveInBatch(noInfoItems)
 }
 
 func mewProducId(id int, site string) model.ProductId {
@@ -105,6 +103,9 @@ func newItemModel(category model.ResponseCategory, currency model.ResponseCurren
 		Description:  currency.Description,
 		Nickname:     seller.Nickname,
 	}
+}
+func newItemModelWithOutInfo(productId model.ProductId) model.Items {
+	return model.Items{Id: productId.Id, SiteId: productId.Site, Price: 0, NameCategory: "Not found", Description: "Not found", Nickname: "Not found"}
 }
 
 func getProductIdFromString(id string) (model.ProductId, error) {
